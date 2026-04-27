@@ -4,6 +4,7 @@ from pathlib import Path
 from ultralytics import YOLO
 from ultralytics.utils.plotting import colors
 from detection_filters import filter_detections
+from kafka_producer import send_event
 
 # Load model (allow env override; default to file next to this script)
 model_path = os.getenv("YOLO_MODEL_PATH")
@@ -55,8 +56,7 @@ while True:
             label = f"{class_name} {confidence:.2f}"
 
             if class_name == "dog" and confidence >= 0.5:
-                # Kafka event placeholder
-                print(f"dog detected @ {confidence:.2f}")
+                send_event(confidence)
 
             # Per-class color (matches Ultralytics palette)
             color = colors(class_id, True)
