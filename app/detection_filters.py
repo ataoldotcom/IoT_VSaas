@@ -8,6 +8,8 @@ def is_target_detection(class_name, target_classes):
     :param target_classes: set or list of target class names
     :return: bool
     """
+    if not target_classes:
+        return True
     return class_name in target_classes
 
 
