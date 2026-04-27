@@ -26,4 +26,6 @@ def filter_detections(detections, target_classes):
     :param target_classes: set or list
     :return: filtered list
     """
+    if not target_classes:
+        return detections
     return [d for d in detections if d["class_name"] in target_classes]
