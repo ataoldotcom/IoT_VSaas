@@ -23,6 +23,8 @@ build/
 .env
 .env.*
 *.log
+latest_frame.jpg
+latest_frame_tmp.jpg
 
 # OS / editor
 .DS_Store
