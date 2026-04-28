@@ -4,39 +4,25 @@ Built an edge video analytics pipeline that captures live camera frames with Ope
 
 Architecture: OpenCV Camera Ingest → YOLOv8 Inference → Flask Backend (API + Streaming) → Confluent Kafka Event Stream → Flask HTML/CSS Dashboard
 
+![IoT VSaaS Dashboard](docs/images/dashboard-screenshot.png)
+
 ## Current App Flow
 
-Webcam turns on  
-↓  
-Frame is captured  
-↓  
-YOLO scans the frame  
-↓  
-Detections are converted into objects  
-↓  
-`filter_detections` runs
-- If `TARGET_CLASSES` is empty (current default), all detections pass through
-- If `TARGET_CLASSES` is set, only those classes are kept
-↓  
-Loop through filtered detections  
-↓  
-Is `class_name == "dog"` and `confidence >= 0.5`?  
-↓  
-Yes  
-↓  
-Check cooldown timer  
-↓  
-Have 3 seconds passed since the last dog event?  
-↓  
-Yes  
-↓  
-`send_event(confidence)`  
-↓  
-Kafka producer builds JSON event  
-↓  
-Event is produced to topic (`KAFKA_TOPIC`, default `detections`)  
-↓  
-If a consumer is running, it reads the event
+1. `app/webcam.py` opens webcam `0` with OpenCV and reads frames in a loop.  
+2. Each frame is passed to Ultralytics YOLOv8 (`yolov8n.pt` by default, override via `YOLO_MODEL_PATH`).  
+3. Detections are normalized into objects with class name, normalized class name, confidence, and bounding box.  
+4. Active filter classes are loaded from the UI-backed config (`load_filter_classes`) and applied via `filter_detections`.  
+5. Filtered detections are drawn on the frame, and the latest frame is written to `app/latest_frame.jpg` for Flask streaming.  
+6. Event gate logic runs per detection:
+   - class must be `dog`
+   - confidence must be `>= 0.5`
+   - cooldown must pass (`COOLDOWN_SECONDS = 3`)  
+7. When the gate passes, `send_event(confidence)` publishes a JSON event to Kafka topic `detections` (default).  
+8. `app/app.py` serves:
+   - `/video_feed` for MJPEG live stream
+   - `/events` for recent detection events
+   - `/filters` to read/update class filters from the dashboard  
+9. The Flask HTML/CSS dashboard polls events and renders live feed + filter controls in real time.
 
 ## Known issue (macOS + external monitors)
 
