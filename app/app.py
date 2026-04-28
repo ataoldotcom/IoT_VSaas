@@ -1,7 +1,8 @@
 import os
 import time
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 from kafka_consumer import get_recent_events
+from utils import load_filter_classes, save_filter_classes
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "..", "frontend", "templates")
@@ -49,6 +50,19 @@ def events():
     return jsonify({
         "events": get_recent_events()
     })
+
+
+@app.route("/filters", methods=["GET"])
+def get_filters():
+    return jsonify({"classes": load_filter_classes()})
+
+
+@app.route("/filters", methods=["POST"])
+def update_filters():
+    body = request.get_json(silent=True) or {}
+    classes = body.get("classes", [])
+    saved = save_filter_classes(classes)
+    return jsonify({"classes": saved})
 
 
 if __name__ == "__main__":

@@ -8,10 +8,45 @@
     <h1>Live Feed</h1>
     <img src="/video_feed" width="720">
 
+<h2>Filters</h2>
+<input id="filterInput" type="text" placeholder="dog, couch, cup" size="40">
+<button id="saveFiltersBtn" type="button">Save Filters</button>
+<pre id="currentFilters">Current filters: []</pre>
+
 <h2>Detection Events</h2>
 <pre id="events">Waiting for events...</pre>
 
 <script>
+    async function loadFilters() {
+        const response = await fetch("/filters");
+        const data = await response.json();
+        const classes = data["classes"] || [];
+
+        document.getElementById("filterInput").value = classes.join(", ");
+        document.getElementById("currentFilters").textContent =
+            "Current filters: " + JSON.stringify(classes);
+    }
+
+    async function saveFilters() {
+        const raw = document.getElementById("filterInput").value;
+        const classes = raw
+            .split(",")
+            .map((name) => name.trim())
+            .filter((name) => name.length > 0);
+
+        const response = await fetch("/filters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ classes })
+        });
+        const data = await response.json();
+        const saved = data["classes"] || [];
+
+        document.getElementById("filterInput").value = saved.join(", ");
+        document.getElementById("currentFilters").textContent =
+            "Current filters: " + JSON.stringify(saved);
+    }
+
     async function loadEvents() {
         const response = await fetch("/events");
         const data = await response.json();
@@ -20,7 +55,9 @@
             JSON.stringify(data["events"], null, 2);
     }
 
+    document.getElementById("saveFiltersBtn").addEventListener("click", saveFilters);
     setInterval(loadEvents, 1000);
+    loadFilters();
     loadEvents();
 </script>
 </body>
