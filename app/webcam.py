@@ -14,8 +14,12 @@ if not model_path:
     model_path = str(Path(__file__).resolve().with_name("yolov8n.pt"))
 model = YOLO(model_path)
 
+#Flask video stream path
+FRAME_PATH = "latest_frame.jpg"
+TEMP_FRAME_PATH = "latest_frame_tmp.jpg"
+
 # Target classes
-TARGET_CLASSES = ["dog","tv"]
+TARGET_CLASSES = []
 
 # Kafka Cooldown (debounce)
 LAST_EVENT_TIME = 0
@@ -108,7 +112,11 @@ try:
                     thickness,
                 )
 
-        # Show frame
+        # Send processed frame to Flask UI
+        cv2.imwrite(TEMP_FRAME_PATH, frame)
+        os.replace(TEMP_FRAME_PATH, FRAME_PATH)
+
+        # Show processed frame on local machine
         cv2.imshow("No filtering", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):

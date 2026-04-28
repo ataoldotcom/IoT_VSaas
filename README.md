@@ -1,6 +1,42 @@
 # IoT_VSaas
 VSaaS surveillance detection
 
+Camera → YOLO → Filter detections → Dog found? → Cooldown passed? → Send Kafka event
+
+## Current App Flow
+
+Webcam turns on  
+↓  
+Frame is captured  
+↓  
+YOLO scans the frame  
+↓  
+Detections are converted into objects  
+↓  
+`filter_detections` runs
+- If `TARGET_CLASSES` is empty (current default), all detections pass through
+- If `TARGET_CLASSES` is set, only those classes are kept
+↓  
+Loop through filtered detections  
+↓  
+Is `class_name == "dog"` and `confidence >= 0.5`?  
+↓  
+Yes  
+↓  
+Check cooldown timer  
+↓  
+Have 3 seconds passed since the last dog event?  
+↓  
+Yes  
+↓  
+`send_event(confidence)`  
+↓  
+Kafka producer builds JSON event  
+↓  
+Event is produced to topic (`KAFKA_TOPIC`, default `detections`)  
+↓  
+If a consumer is running, it reads the event
+
 ## Known issue (macOS + external monitors)
 
 When running via OpenCV `cv2.imshow` on macOS, moving the preview window to a different/extended monitor may cause the preview window to disappear while the terminal process keeps running.
