@@ -28,4 +28,8 @@ def filter_detections(detections, target_classes):
     """
     if not target_classes:
         return detections
-    return [d for d in detections if d["class_name"] in target_classes]
+    return [
+        d
+        for d in detections
+        if d.get("normalized_class_name", d.get("class_name", "")).strip().lower() in target_classes
+    ]

@@ -6,6 +6,7 @@ from ultralytics import YOLO
 from ultralytics.utils.plotting import colors
 from detection_filters import filter_detections
 from kafka_producer import producer, send_event
+from utils import load_filter_classes
 
 
 # Load model (allow env override; default to file next to this script)
@@ -19,7 +20,10 @@ FRAME_PATH = "latest_frame.jpg"
 TEMP_FRAME_PATH = "latest_frame_tmp.jpg"
 
 # Target classes
-TARGET_CLASSES = []
+#TARGET_CLASSES = []
+
+# Target classes created in UI now
+TARGET_CLASSES = load_filter_classes()
 
 # Kafka Cooldown (debounce)
 LAST_EVENT_TIME = 0
@@ -44,6 +48,7 @@ try:
             for box in result.boxes:
                 class_id = int(box.cls[0])
                 class_name = model.names[class_id]
+                normalized_class_name = str(class_name).strip().lower()
                 confidence = float(box.conf[0])
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
 
@@ -51,22 +56,25 @@ try:
                     {
                         "class_id": class_id,
                         "class_name": class_name,
+                        "normalized_class_name": normalized_class_name,
                         "confidence": confidence,
                         "box": (x1, y1, x2, y2),
                     }
                 )
-
+            # Allows for UI to control the detection filters
+            TARGET_CLASSES = load_filter_classes()
             filtered_detections = filter_detections(detections, TARGET_CLASSES)
 
             for detection in filtered_detections:
                 class_id = detection["class_id"]
                 class_name = detection["class_name"]
+                normalized_class_name = detection["normalized_class_name"]
                 confidence = detection["confidence"]
                 x1, y1, x2, y2 = detection["box"]
 
                 label = f"{class_name} {confidence:.2f}"
 
-                if class_name == "dog" and confidence >= 0.5:
+                if normalized_class_name == "dog" and confidence >= 0.5:
                     current_time = time.time()
 
                     if current_time - LAST_EVENT_TIME > COOLDOWN_SECONDS:
