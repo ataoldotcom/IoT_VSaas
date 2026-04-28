@@ -1,7 +1,8 @@
-# IoT_VSaas
-VSaaS surveillance detection
+# IoT_VSaaS
+IoT VSaaS Real-Time Video Analytics Platform
+Built an edge video analytics pipeline that captures live camera frames with OpenCV, performs object detection using Ultralytics YOLOv8, serves video and event APIs through Flask, and publishes detection events to Confluent Kafka for downstream consumers and alerting workflows. Implemented class-based detection filtering, confidence thresholds, and cooldown-based event debouncing to control event quality and stream volume.
 
-Camera → YOLO → Filter detections → Dog found? → Cooldown passed? → Send Kafka event
+Architecture: OpenCV Camera Ingest → YOLOv8 Inference → Flask Backend (API + Streaming) → Confluent Kafka Event Stream → Flask HTML/CSS Dashboard
 
 ## Current App Flow
 
