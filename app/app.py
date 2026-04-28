@@ -17,7 +17,7 @@ FRAME_PATH = os.getenv(
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index_v2.html")
 
 
 def generate_frames():

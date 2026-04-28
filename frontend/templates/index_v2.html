@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YOLO Detection Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        .status {
+            background: #16a34a;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.25);
+        }
+
+        .video-box {
+            background: #020617;
+            border-radius: 12px;
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .video-box img {
+            display: block;
+            width: 720px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        label {
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .current {
+            margin-top: 12px;
+            color: #93c5fd;
+            font-size: 14px;
+        }
+
+        .events {
+            max-height: 420px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .event-card {
+            background: #1f2937;
+            border-left: 4px solid #22c55e;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <header>
+        <h1>YOLO Detection Dashboard</h1>
+        <div class="status">● Live</div>
+    </header>
+
+    <div class="grid">
+        <section class="card">
+            <h2>Live Feed</h2>
+            <div class="video-box">
+                <img id="videoFeed" src="/video_feed" width="720" alt="Live webcam feed">
+            </div>
+        </section>
+
+        <aside>
+            <section class="card">
+                <h2>Filters</h2>
+
+                <!-- Checkbox Filters -->
+                <div class="filter-grid">
+                    <label><input type="checkbox" value="person"> Person</label>
+                    <label><input type="checkbox" value="dog"> Dog</label>
+                    <label><input type="checkbox" value="cat"> Cat</label>
+                    <label><input type="checkbox" value="phone"> Phone</label>
+                    <label><input type="checkbox" value="chair"> Chair</label>
+                    <label><input type="checkbox" value="couch"> Couch</label>
+                    <label><input type="checkbox" value="potted plant"> Plant</label>
+                    <label><input type="checkbox" value="tv"> TV</label>
+                    <label><input type="checkbox" value="book"> Book</label>
+                    <label><input type="checkbox" value="laptop"> Laptop</label>
+                </div>
+
+                <!-- Custom Filters -->
+                <input
+                    id="customFilterInput"
+                    type="text"
+                    placeholder="Add custom filters (e.g. keyboard, laptop)"
+                    style="width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: none;"
+                >
+
+                <button id="saveFiltersBtn" type="button" style="margin-top: 12px;">
+                    Save Filters
+                </button>
+
+                <div id="currentFilters" class="current">
+                    Current filters: []
+                </div>
+            </section>
+
+            <section class="card" style="margin-top: 24px;">
+                <h2>Detection Events</h2>
+                <div id="events" class="events">
+                    <div class="event-card">Waiting for events...</div>
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+<script>
+    async function loadFilters() {
+        const response = await fetch("/filters");
+        const data = await response.json();
+        const classes = data["classes"] || [];
+
+        // Set checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = classes.includes(cb.value);
+        });
+
+        // Set custom input (only values NOT in checkbox list)
+        const checkboxValues = Array.from(
+            document.querySelectorAll('input[type="checkbox"]')
+        ).map(cb => cb.value);
+
+        const custom = classes.filter(c => !checkboxValues.includes(c));
+        document.getElementById("customFilterInput").value = custom.join(", ");
+
+        document.getElementById("currentFilters").textContent =
+            "Current filters: " + JSON.stringify(classes);
+    }
+
+    async function saveFilters() {
+        const checked = Array.from(
+            document.querySelectorAll('input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
+
+        const raw = document.getElementById("customFilterInput").value;
+
+        const custom = raw
+            .split(",")
+            .map(c => c.trim())
+            .filter(c => c.length > 0);
+
+        // Combine + dedupe
+        const classes = [...new Set([...checked, ...custom])];
+
+        const response = await fetch("/filters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ classes })
+        });
+
+        const data = await response.json();
+        const saved = data["classes"] || [];
+
+        document.getElementById("currentFilters").textContent =
+            "Current filters: " + JSON.stringify(saved);
+    }
+
+    async function loadEvents() {
+        const response = await fetch("/events");
+        const data = await response.json();
+        const events = data["events"] || [];
+
+        const eventsDiv = document.getElementById("events");
+        eventsDiv.innerHTML = "";
+
+        if (events.length === 0) {
+            eventsDiv.innerHTML = '<div class="event-card">No events yet</div>';
+            return;
+        }
+
+        events.slice(-10).reverse().forEach(event => {
+            const card = document.createElement("div");
+            card.className = "event-card";
+
+            card.innerHTML = `
+                <strong>${event.event_type || "Detection Event"}</strong>
+                Confidence: ${event.confidence ?? "N/A"}<br>
+                Time: ${event.timestamp || "N/A"}<br>
+                Source: ${event.source || "N/A"}
+            `;
+
+            eventsDiv.appendChild(card);
+        });
+    }
+
+    document.getElementById("saveFiltersBtn").addEventListener("click", saveFilters);
+
+    setInterval(loadEvents, 1000);
+    loadFilters();
+    loadEvents();
+</script>
+</body>
+</html>
