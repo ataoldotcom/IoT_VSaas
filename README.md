@@ -32,6 +32,21 @@ Current workaround:
 - Keep the OpenCV preview window on the same display where it was first opened.
 - If the window disappears, stop and restart the script.
 
+### Known issue (black/blank dashboard video feed)
+
+Until the frame-source wiring is unified, the dashboard can appear black/blank if process startup order is wrong or stale Python processes are still running.
+
+Recommended demo startup order:
+1. Stop old Python processes.
+2. Start Kafka/Docker.
+3. Start `webcam.py`.
+4. Start Flask app.
+5. Open `http://127.0.0.1:5000`.
+
+Long-term fix:
+- Make Flask and `webcam.py` share one clean frame source.  
+- For now, demo workflow requires both processes running.
+
 ## Kafka Setup & Viewing Detection Events
 
 ### Prerequisites
