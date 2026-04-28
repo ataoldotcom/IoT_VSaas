@@ -30,4 +30,4 @@ def send_event(confidence):
         TOPIC,
         value=json.dumps(event).encode("utf-8")
     )
-    producer.flush()
+    producer.poll(0)
