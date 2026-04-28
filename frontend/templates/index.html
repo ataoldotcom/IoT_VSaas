@@ -7,5 +7,21 @@
 <body>
     <h1>Live Feed</h1>
     <img src="/video_feed" width="720">
+
+<h2>Detection Events</h2>
+<pre id="events">Waiting for events...</pre>
+
+<script>
+    async function loadEvents() {
+        const response = await fetch("/events");
+        const data = await response.json();
+
+        document.getElementById("events").textContent =
+            JSON.stringify(data["events"], null, 2);
+    }
+
+    setInterval(loadEvents, 1000);
+    loadEvents();
+</script>
 </body>
 </html>

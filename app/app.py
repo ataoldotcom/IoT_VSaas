@@ -1,6 +1,7 @@
 import os
 import time
 from flask import Flask, render_template, Response, jsonify
+from kafka_consumer import get_recent_events
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "..", "frontend", "templates")
@@ -43,7 +44,7 @@ def video_feed():
 @app.route("/events")
 def events():
     return jsonify({
-        "events": []
+        "events": get_recent_events()
     })
 
 
