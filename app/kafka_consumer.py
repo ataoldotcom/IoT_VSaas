@@ -1,9 +1,13 @@
 import json
+import os
+from uuid import uuid4
 from confluent_kafka import Consumer
+
+DEFAULT_GROUP_ID = f"flask-events-consumer-{uuid4().hex}"
 
 consumer = Consumer({
     "bootstrap.servers": "localhost:9092",
-    "group.id": "flask-events-consumer",
+    "group.id": os.getenv("KAFKA_GROUP_ID", DEFAULT_GROUP_ID),
     "auto.offset.reset": "latest"
 })
 

@@ -8,7 +8,10 @@ TEMPLATE_DIR = os.path.join(BASE_DIR, "..", "frontend", "templates")
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
-FRAME_PATH = os.getenv("FRAME_PATH", "latest_frame.jpg")
+FRAME_PATH = os.getenv(
+    "FRAME_PATH",
+    os.path.join(BASE_DIR, "latest_frame.jpg")
+)
 
 
 @app.route("/")
